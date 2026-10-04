@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PuzzlePrint – Word Search &amp; Crossword Maker</title>
+  <meta name="description" content="Make and print your own word search puzzles, crosswords and bingo cards from any word list. Simple, private and offline.">
+  <meta name="theme-color" content="#3730a3">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <style id="pageRule"></style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="icon-192.png" alt="" width="30" height="30"><span>PuzzlePrint</span></div>
+    <span class="tree-title"></span>
+    <div class="top-btns">
+      <button id="printBtn" class="tb">🖨 Print</button>
+      <button id="imgBtn" class="tb">🖼 Save picture</button>
+      <button id="moreBtn" class="tb">☰ More</button>
+      <button id="proBtn" class="pro-btn" hidden>★ Get Pro</button>
+    </div>
+    <div id="menu" class="menu" hidden>
+      <button id="sampleBtn">Load a sample word list</button>
+      <button id="openBtn">Open a word list file (.txt)…</button>
+      <button id="clearBtn" class="danger">Clear the word list…</button>
+      <a href="mailto:thequan03072002@gmail.com?subject=PuzzlePrint%20feedback">✉ Feedback &amp; support</a>
+      <a href="https://apps.microsoft.com/detail/9NRR32J91340" target="_blank" rel="noopener">More apps: Kinleaf family tree maker</a>
+      <a href="https://apps.microsoft.com/detail/9MWSF3JMP1GJ" target="_blank" rel="noopener">More apps: PrintCal photo calendar maker</a>
+    </div>
+    <input id="fileIn" type="file" accept=".txt,text/plain" hidden>
+  </header>
+
+  <main class="layout">
+    <aside class="left">
+      <h2>What to make</h2>
+      <div class="seg3" id="types">
+        <button data-t="ws">Word search</button>
+        <button data-t="cw">Crossword</button>
+        <button data-t="bingo">Bingo cards</button>
+      </div>
+      <label class="field">Title<input id="title" type="text" maxlength="60"></label>
+      <div class="two">
+        <label class="field">Paper<select id="paper"><option value="letter">Letter (US)</option><option value="a4">A4</option></select></label>
+        <label class="field" id="sizeF">Grid size<select id="size"><option>10</option><option>12</option><option>15</option><option>18</option><option>20</option></select></label>
+        <label class="field" id="cardsF">How many cards<select id="cards"><option>1</option><option>2</option><option>4</option><option>8</option><option>12</option><option>20</option><option>30</option><option>50</option></select></label>
+        <label class="field" id="perF">Cards per page<select id="per"><option>1</option><option>2</option><option>4</option></select></label>
+      </div>
+      <div id="wsOpts">
+        <label class="check"><input id="diag" type="checkbox"> Diagonal words</label>
+        <label class="check"><input id="back" type="checkbox"> Backward words (harder)</label>
+      </div>
+      <label class="check" id="freeF"><input id="freeSq" type="checkbox"> Free square in the middle</label>
+      <label class="check" id="keyF"><input id="key" type="checkbox"> Also print the answer key</label>
+      <label class="check"><input id="nameLine" type="checkbox"> Name and date line on top</label>
+
+      <h2 id="wordsHead">Words</h2>
+      <textarea id="words" spellcheck="false"></textarea>
+      <p id="hint" class="hint"></p>
+      <p id="warn" class="warn" hidden></p>
+      <button id="shuffle" class="primary">🔀 Shuffle – make a new one</button>
+    </aside>
+
+    <section class="stage">
+      <div id="pager" class="pager"></div>
+      <div class="preview">
+        <button id="prev" class="nav" title="Previous page">‹</button>
+        <div id="page" style="height:100%;display:flex;align-items:center;justify-content:center;min-width:0;flex:1"></div>
+        <button id="next" class="nav" title="Next page">›</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="proDialog" class="dlg">
+    <h2>PuzzlePrint Pro</h2>
+    <p class="muted">One-time purchase. Yours forever on this Microsoft account.</p>
+    <ul class="pro-list">
+      <li><strong>Big puzzles</strong> – up to 40 words <span class="muted">(Free: 12 in a word search, 8 in a crossword)</span></li>
+      <li><strong>Up to 50 bingo cards</strong> at once <span class="muted">(Free: 4)</span></li>
+      <li><strong>Large 18 and 20 letter grids</strong></li>
+    </ul>
+    <p id="proMsg" class="pro-msg" hidden></p>
+    <div class="row-btns">
+      <button id="buyBtn" class="primary">Unlock Pro</button>
+      <button id="restoreBtn" class="ghost">Restore purchase</button>
+      <button id="closePro" class="ghost">Not now</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <div id="printArea"></div>
+  <script src="app.js"></script>
+</body>
+</html>
