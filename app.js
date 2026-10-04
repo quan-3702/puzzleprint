@@ -4,7 +4,7 @@ const FREE_WS = 12, FREE_CW = 8, FREE_CARDS = 4, FREE_SIZE = 15, MAX_WORDS = 40;
 const STORE_BILLING = 'https://store.microsoft.com/billing';
 const PRO_SKU = 'puzzleprint_pro';
 const PRO_IDS = [PRO_SKU];
-let STORE_URL = 'https://apps.microsoft.com/search?query=PuzzlePrint';
+let STORE_URL = 'https://apps.microsoft.com/detail/9N003PBQX6Q0';
 let proAvailable = false; // Pro limits apply only when the Store actually sells the add-on
 let proSku = PRO_SKU;
 let isPro = false;
