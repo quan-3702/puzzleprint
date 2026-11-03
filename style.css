@@ -124,3 +124,5 @@ textarea { min-height: 70px; resize: vertical; }
 #words { min-height: 220px; font-size: 16px; line-height: 1.45; flex: 1; }
 .pager { text-align: center; padding: 6px; color: var(--muted); font-size: 14px; background: var(--card); border-bottom: 1px solid var(--line); }
 .warn { background: var(--accent-2); border-radius: 8px; padding: 8px 10px; font-size: 13px; margin: 0; }
+.fb-note { color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.45; margin: 10px 0 0; overflow-wrap: anywhere; }
+.fb-note a { color: inherit; text-decoration: underline; }

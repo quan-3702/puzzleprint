@@ -9,7 +9,14 @@ let proAvailable = false; // Pro limits apply only when the Store actually sells
 proAvailable = true; // owner's rule: Pro is never free – free limits apply everywhere (website, Store, offline) until Pro is bought
 let proSku = PRO_SKU;
 let isPro = false;
-try { isPro = localStorage.getItem('puzzleprint-pro') === '1'; } catch (_) {}
+try { // website: never trust the cache (Pro is bought in the Store app); Store app: trust it only if the Store confirmed it in the last 30 days
+  if ('getDigitalGoodsService' in window && localStorage.getItem('puzzleprint-pro') === '1') {
+    const ok = localStorage.getItem('puzzleprint-pro-ok');
+    if (ok === null) localStorage.setItem('puzzleprint-pro-ok', String(Date.now())); // saved by an older version: counts as confirmed now, once
+    const t = ok === null ? Date.now() : Number(ok);
+    isPro = t > 0 && t <= Date.now() + 864e5 && Date.now() - t < 30 * 864e5; // a future, NaN or garbage date is not trusted
+  }
+} catch (_) {}
 const unlocked = () => isPro || !proAvailable;
 
 async function billing() {
@@ -42,7 +49,10 @@ async function checkPro() {
     if (details[0]) { proSku = details[0].itemId; if (!PRO_IDS.includes(proSku)) PRO_IDS.push(proSku); }
     const list = await svc.listPurchases();
     const owned = list.some((p) => PRO_IDS.includes(p.itemId));
-    if (owned || details.length) { setPro(owned); return owned; }
+    if (owned || details.length) {
+      try { if (owned) localStorage.setItem('puzzleprint-pro-ok', String(Date.now())); else localStorage.removeItem('puzzleprint-pro-ok'); } catch (_) {}
+      setPro(owned); return owned;
+    }
     setPro(isPro); // Store did not answer (offline): keep what we knew
     return isPro;
   } catch (_) { return isPro; }
@@ -332,8 +342,17 @@ function limitReason() { // why the current puzzle needs Pro, or ''
   if (st.type === 'bingo' && st.cards > FREE_CARDS) return `The free version prints up to ${FREE_CARDS} bingo cards at once.`;
   return '';
 }
+// on-screen only: a "PREVIEW" watermark over puzzles that need Pro (never in print or saved pictures)
+function previewMark(W, H) {
+  const f1 = (n) => n.toFixed(1), fs = Math.min(W, H) * 0.16, a = Math.atan2(H, W) * -180 / Math.PI;
+  let s = `<g pointer-events="none" font-family="Segoe UI, Arial, sans-serif" font-weight="800" text-anchor="middle" transform="rotate(${f1(a)} ${f1(W / 2)} ${f1(H / 2)})">`;
+  s += `<text x="${f1(W / 2)}" y="${f1(H / 2 + fs * 0.35)}" font-size="${f1(fs)}" letter-spacing="${f1(fs * 0.12)}" fill="#fff" fill-opacity=".55" stroke="#1f1a17" stroke-opacity=".45" stroke-width="${f1(fs * 0.02)}">PREVIEW</text>`;
+  [-1, 1].forEach((k) => { s += `<text x="${f1(W / 2)}" y="${f1(H / 2 + k * fs * 1.25 + fs * 0.12)}" font-size="${f1(fs * 0.3)}" fill="#fff" fill-opacity=".6" stroke="#1f1a17" stroke-opacity=".35" stroke-width="${f1(fs * 0.008)}">★ PuzzlePrint Pro</text>`; });
+  return s + '</g>';
+}
 function renderPage() {
-  $('page').innerHTML = pages[pageNo].svg;
+  const p = pages[pageNo];
+  $('page').innerHTML = !unlocked() && limitReason() ? p.svg.replace(/<\/svg>$/, previewMark(p.w, p.h) + '</svg>') : p.svg; // free users see puzzles over the free limit marked as a preview
   $('pager').textContent = pages.length > 1 ? `Page ${pageNo + 1} of ${pages.length}` : 'Preview';
   $('prev').disabled = pageNo === 0; $('next').disabled = pageNo >= pages.length - 1;
 }
