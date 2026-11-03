@@ -1,4 +1,4 @@
-const CACHE = 'puzzleprint-v8';
+const CACHE = 'puzzleprint-v9';
 const ASSETS = ['./', 'index.html', 'help.html', 'help-1.jpg', 'help-2.jpg', 'help-3.jpg', 'privacy.html', 'style.css', 'app.js', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
 
 self.addEventListener('install', (e) => {
