@@ -6,6 +6,7 @@ const PRO_SKU = 'puzzleprint_pro';
 const PRO_IDS = [PRO_SKU];
 let STORE_URL = 'https://apps.microsoft.com/detail/9N003PBQX6Q0';
 let proAvailable = false; // Pro limits apply only when the Store actually sells the add-on
+try { if ('getDigitalGoodsService' in window && localStorage.getItem('puzzleprint-proavail') === '1') proAvailable = true; } catch (_) {} // keep Pro limits when offline
 let proSku = PRO_SKU;
 let isPro = false;
 try { isPro = localStorage.getItem('puzzleprint-pro') === '1'; } catch (_) {}
@@ -25,17 +26,26 @@ function setPro(v) {
   document.body.classList.toggle('unlocked', unlocked());
   if (typeof renderAll === 'function') renderAll();
 }
+async function checkProAfterBuy() {
+  for (let i = 0; i < 6; i++) {
+    if (await checkPro()) return true;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  proMessage('Thank you! If Pro is not unlocked within a minute, click “Restore purchase”.');
+  return false;
+}
 async function checkPro() {
   const svc = await billing();
   if (!svc) return false;
   try {
     const details = await svc.getDetails(PRO_IDS).catch(() => []);
-    proAvailable = details.length > 0;
+    if (details.length) { proAvailable = true; try { localStorage.setItem('puzzleprint-proavail', '1'); } catch (_) {} }
     if (details[0]) { proSku = details[0].itemId; if (!PRO_IDS.includes(proSku)) PRO_IDS.push(proSku); }
     const list = await svc.listPurchases();
     const owned = list.some((p) => PRO_IDS.includes(p.itemId));
-    setPro(owned);
-    return owned;
+    if (owned || details.length) { setPro(owned); return owned; }
+    setPro(isPro); // Store did not answer (offline): keep what we knew
+    return isPro;
   } catch (_) { return isPro; }
 }
 function proMessage(text) { const m = $('proMsg'); m.hidden = !text; m.textContent = text || ''; }
@@ -70,7 +80,7 @@ async function buyPro() {
     proMessage('Purchase could not be completed: ' + (e.message || e));
     return;
   }
-  if (await checkPro()) { proMessage('Thank you! Pro is unlocked. ★'); setTimeout(() => $('proDialog').close(), 1500); }
+  if (await checkProAfterBuy()) { proMessage('Thank you! Pro is unlocked. ★'); setTimeout(() => $('proDialog').close(), 1500); }
 }
 function needsPro(reason) {
   if (unlocked()) return false;
@@ -90,12 +100,14 @@ const blank = () => ({ type: 'ws', paper: 'letter', size: 12, cards: 4, per: 1, 
 let st = blank();
 try { const s = JSON.parse(localStorage.getItem('puzzleprint') || 'null'); if (s && s.lists) st = Object.assign(blank(), s); } catch (_) {}
 let saveTimer;
-function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem('puzzleprint', JSON.stringify(st)); } catch (_) {} }, 300); }
+function saveNow() { clearTimeout(saveTimer); try { localStorage.setItem('puzzleprint', JSON.stringify(st)); } catch (_) {} }
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); }
+window.addEventListener('pagehide', saveNow); // closing the window right after a change must not lose it
 const cur = () => st.lists[st.type];
 
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function shuffled(arr, r) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-const letters = (s) => Array.from(String(s).toLocaleUpperCase().replace(/[^\p{L}]/gu, ''));
+const letters = (s) => Array.from(String(s).normalize('NFC').toLocaleUpperCase().replace(/[^\p{L}]/gu, ''));
 
 // entries: [{label, word:[letters], clue}]
 function entries() {
@@ -269,7 +281,7 @@ function bingoPages(list, title, r) {
   const labels = list.map((e) => e.label);
   const n = labels.length >= 24 ? 5 : labels.length >= 16 ? 4 : 3;
   const free = st.freeSq && n % 2 === 1, need = n * n - (free ? 1 : 0);
-  if (labels.length < need) return { pages: [wrapSvg(w, h, head(w, title, 'Add at least 8 different words to make bingo cards.').s)], n };
+  if (labels.length < need) return { pages: [wrapSvg(w, h, head(w, title, `Add at least ${need} different words to make bingo cards.`).s)], n };
   const cols = per === 4 ? 2 : 1, rows = per === 1 ? 1 : 2, bw = (w - 60) / cols, bh = (h - 60) / rows;
   const card = (bx, by) => {
     const pick = shuffled(labels, r).slice(0, need); if (free) pick.splice((n * n) >> 1, 0, null);
